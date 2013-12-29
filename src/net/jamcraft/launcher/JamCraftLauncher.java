@@ -1,6 +1,7 @@
 package net.jamcraft.launcher;
 
 import java.awt.EventQueue;
+import java.awt.Rectangle;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -10,11 +11,27 @@ import javax.swing.JButton;
 import javax.swing.SwingConstants;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.io.File;
+import java.io.FileNotFoundException;
+
+import net.miginfocom.swing.MigLayout;
+import net.sf.sevenzipjbinding.SevenZip;
+import net.sf.sevenzipjbinding.SevenZipException;
+import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
+
+import javax.swing.SpringLayout;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
 
 public class JamCraftLauncher
 {
 
     private JFrame frame;
+    private JPasswordField passwordField;
+    private JTextField textField;
 
     /**
      * Launch the application.
@@ -31,6 +48,15 @@ public class JamCraftLauncher
                     window.frame.setVisible(true);
                 }
                 catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                try
+                {
+                    SevenZip.initSevenZipFromPlatformJAR();
+                    System.out.println("7-Zip-JBinding library was initialized");
+                }
+                catch (SevenZipNativeInitializationException e)
                 {
                     e.printStackTrace();
                 }
@@ -52,19 +78,67 @@ public class JamCraftLauncher
     private void initialize()
     {
         frame = new JFrame();
-        frame.setBounds(100, 100, 690, 470);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().setLayout(new GridLayout(1, 0, 0, 0));
-        
-        JButton btnNewButton = new JButton("New button");
-        btnNewButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent arg0) {
-                JamCraftDownload dl=new JamCraftDownload();
-                dl.show();
+        SpringLayout springLayout = new SpringLayout();
+        frame.getContentPane().setLayout(springLayout);
+        frame.setBounds(new Rectangle(700, 500));
+
+        JButton btnLaunch = new JButton("Launch!");
+        btnLaunch.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent arg0)
+            {
+                File file = new File("C:\\Users\\jamesthollowell\\AppData\\Roaming\\.minecraft\\JamCraft\\JamCraft-167.7z");
+                if (!file.exists())
+                {
+                    System.out.println("Error Reading file!");
+                }
+                else
+                {
+                    JamCraftDownload downloadWin = new JamCraftDownload();
+                    try
+                    {
+                        downloadWin.extractArchive(file);
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
             }
         });
-        btnNewButton.setBounds(10, 10, 200, 200);
-        frame.getContentPane().add(btnNewButton);
-    }
+        springLayout.putConstraint(SpringLayout.SOUTH, btnLaunch, -10, SpringLayout.SOUTH, frame.getContentPane());
+        springLayout.putConstraint(SpringLayout.EAST, btnLaunch, -10, SpringLayout.EAST, frame.getContentPane());
+        frame.getContentPane().add(btnLaunch);
 
+        passwordField = new JPasswordField();
+        springLayout.putConstraint(SpringLayout.WEST, passwordField, -136, SpringLayout.WEST, btnLaunch);
+        springLayout.putConstraint(SpringLayout.SOUTH, passwordField, -12, SpringLayout.SOUTH, frame.getContentPane());
+        springLayout.putConstraint(SpringLayout.EAST, passwordField, -6, SpringLayout.WEST, btnLaunch);
+        frame.getContentPane().add(passwordField);
+
+        JLabel lblPassword = new JLabel("Password:");
+        springLayout.putConstraint(SpringLayout.NORTH, lblPassword, 4, SpringLayout.NORTH, btnLaunch);
+        springLayout.putConstraint(SpringLayout.EAST, lblPassword, -6, SpringLayout.WEST, passwordField);
+        frame.getContentPane().add(lblPassword);
+
+        textField = new JTextField();
+        springLayout.putConstraint(SpringLayout.SOUTH, textField, 0, SpringLayout.SOUTH, btnLaunch);
+        springLayout.putConstraint(SpringLayout.EAST, textField, -6, SpringLayout.WEST, lblPassword);
+        frame.getContentPane().add(textField);
+        textField.setColumns(10);
+
+        JLabel lblUsername = new JLabel("Username:");
+        springLayout.putConstraint(SpringLayout.NORTH, lblUsername, 3, SpringLayout.NORTH, textField);
+        springLayout.putConstraint(SpringLayout.EAST, lblUsername, -6, SpringLayout.WEST, textField);
+        frame.getContentPane().add(lblUsername);
+
+        JTextPane textPaneInfo = new JTextPane();
+        textPaneInfo.setEditable(false);
+        springLayout.putConstraint(SpringLayout.NORTH, textPaneInfo, 30, SpringLayout.NORTH, frame.getContentPane());
+        springLayout.putConstraint(SpringLayout.WEST, textPaneInfo, 10, SpringLayout.WEST, frame.getContentPane());
+        springLayout.putConstraint(SpringLayout.SOUTH, textPaneInfo, -22, SpringLayout.NORTH, passwordField);
+        springLayout.putConstraint(SpringLayout.EAST, textPaneInfo, 457, SpringLayout.WEST, frame.getContentPane());
+        frame.getContentPane().add(textPaneInfo);
+    }
 }
