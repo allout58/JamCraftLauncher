@@ -28,6 +28,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JamCraftDownload extends JFrame
 {
@@ -80,73 +82,15 @@ public class JamCraftDownload extends JFrame
         contentPane.add(textArea);
     }
     
-    public void extractArchive(File file) throws SevenZipException, IOException
+    public void extractArchive(File file) throws IOException
     {
-        RandomAccessFile raf=new RandomAccessFile(file, "r");
-        final ISevenZipInArchive inArchive=SevenZip.openInArchive(null, new RandomAccessFileInStream(raf));
-        inArchive.extract(null, false, new IArchiveExtractCallback()
-        {
-            long total=0;
-            @Override
-            public void setTotal(long arg0) throws SevenZipException
-            {
-                total=arg0;
-            }
-            
-            @Override
-            public void setCompleted(long arg0) throws SevenZipException
-            {
-                System.out.println((double)arg0/total);               
-            }
-            
-            @Override
-            public void setOperationResult(ExtractOperationResult extractOperationResult) throws SevenZipException
-            {
-                // TODO Auto-generated method stub
-                
-            }
-            
-            @Override
-            public void prepareOperation(ExtractAskMode extractAskMode) throws SevenZipException
-            {
-                // TODO Auto-generated method stub
-                
-            }
-            
-            public ISequentialOutStream getStream(final int index, ExtractAskMode extractAskMode) throws SevenZipException {
-                return new ISequentialOutStream() {
-                @Override
-                public int write(byte[] data) throws SevenZipException {
-                    String filePath = inArchive.getStringProperty(index, PropID.PATH);
-                    FileOutputStream fos = null;
-                    try {
-                    File dir = new File("C:/Jamcraft/");
-                    File path = new File("C:/Jamcraft/" + filePath);
-                    if (!dir.exists()) {
-                        dir.mkdirs();
-                    }
-                    if (!path.exists()) {
-                        path.createNewFile();
-                    }
-                    fos = new FileOutputStream(path, true);
-                    fos.write(data);
-                    } catch (IOException e) {
-//                    logger.severe(e.getLocalizedMessage());
-                    } finally {
-                    try {
-                        if (fos != null) {
-                        fos.flush();
-                        fos.close();
-                        }
-                    } catch (IOException e) {
-//                        logger.severe(e.getLocalizedMessage());
-                    }
-                    }
-                    return data.length;
-                }
-                };
-            }
-        }); 
-        raf.close();
+        List<String> args=new ArrayList<String>();
+        args.add(new File("./executables/7za.exe").getCanonicalFile().getAbsolutePath());
+        args.add("x");
+        args.add("-aoa");
+        args.add(file.getAbsolutePath());
+        ProcessBuilder proc=new ProcessBuilder(args);
+        proc.directory(new File(".").getCanonicalFile());
+        Process p=proc.start();
     }
 }
