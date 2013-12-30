@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URL;
 
 import net.miginfocom.swing.MigLayout;
 import net.sf.sevenzipjbinding.SevenZip;
@@ -48,15 +49,6 @@ public class JamCraftLauncher
                     window.frame.setVisible(true);
                 }
                 catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-                try
-                {
-                    SevenZip.initSevenZipFromPlatformJAR();
-                    System.out.println("7-Zip-JBinding library was initialized");
-                }
-                catch (SevenZipNativeInitializationException e)
                 {
                     e.printStackTrace();
                 }
@@ -98,7 +90,11 @@ public class JamCraftLauncher
                     JamCraftDownload downloadWin = new JamCraftDownload();
                     try
                     {
-                        downloadWin.extractArchive(file);
+//                        downloadWin.extractArchive(file);
+                        int ver=downloadWin.getLatestVersionFromURL(new URL(Settings.jenkinsURL));
+                        downloadWin.setVisible(true);
+                        downloadWin.update();
+//                        downloadWin.downloadFile(new URL(Settings.jenkinsURL+"JamCraft-"+ver+".7z"), new File("./JamCraft-"+ver+".7z").getCanonicalFile());
                     }
                     catch (Exception e)
                     {
