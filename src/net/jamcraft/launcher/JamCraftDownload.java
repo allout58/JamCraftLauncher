@@ -12,16 +12,6 @@ import javax.swing.JLabel;
 import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
 
-import net.sf.sevenzipjbinding.ExtractAskMode;
-import net.sf.sevenzipjbinding.ExtractOperationResult;
-import net.sf.sevenzipjbinding.IArchiveExtractCallback;
-import net.sf.sevenzipjbinding.ISequentialOutStream;
-import net.sf.sevenzipjbinding.ISevenZipInArchive;
-import net.sf.sevenzipjbinding.PropID;
-import net.sf.sevenzipjbinding.SevenZip;
-import net.sf.sevenzipjbinding.SevenZipException;
-import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
-
 import java.awt.Font;
 import java.awt.Color;
 import java.io.BufferedInputStream;
@@ -69,14 +59,14 @@ public class JamCraftDownload extends JFrame
         contentPane.setLayout(sl_contentPane);
 
         progressBar = new JProgressBar();
-        sl_contentPane.putConstraint(SpringLayout.NORTH, progressBar, 32, SpringLayout.NORTH, contentPane);
-        sl_contentPane.putConstraint(SpringLayout.WEST, progressBar, 10, SpringLayout.WEST, contentPane);
-        sl_contentPane.putConstraint(SpringLayout.EAST, progressBar, -43, SpringLayout.EAST, contentPane);
+        sl_contentPane.putConstraint(SpringLayout.EAST, progressBar, -5, SpringLayout.EAST, contentPane);
         contentPane.add(progressBar);
 
         JLabel lblProgress = new JLabel("Progress: ");
-        sl_contentPane.putConstraint(SpringLayout.WEST, lblProgress, 0, SpringLayout.WEST, progressBar);
-        sl_contentPane.putConstraint(SpringLayout.SOUTH, lblProgress, -6, SpringLayout.NORTH, progressBar);
+        sl_contentPane.putConstraint(SpringLayout.NORTH, lblProgress, 5, SpringLayout.NORTH, contentPane);
+        sl_contentPane.putConstraint(SpringLayout.NORTH, progressBar, 6, SpringLayout.SOUTH, lblProgress);
+        sl_contentPane.putConstraint(SpringLayout.WEST, progressBar, 0, SpringLayout.WEST, lblProgress);
+        sl_contentPane.putConstraint(SpringLayout.WEST, lblProgress, 10, SpringLayout.WEST, contentPane);
         contentPane.add(lblProgress);
 
         lblProgressPercent = new JLabel("");
@@ -85,18 +75,20 @@ public class JamCraftDownload extends JFrame
         contentPane.add(lblProgressPercent);
 
         textArea = new JTextArea();
+        sl_contentPane.putConstraint(SpringLayout.NORTH, textArea, 9, SpringLayout.SOUTH, progressBar);
+        sl_contentPane.putConstraint(SpringLayout.WEST, textArea, 12, SpringLayout.WEST, contentPane);
         sl_contentPane.putConstraint(SpringLayout.SOUTH, textArea, -40, SpringLayout.SOUTH, contentPane);
+        sl_contentPane.putConstraint(SpringLayout.EAST, textArea, -10, SpringLayout.EAST, contentPane);
         textArea.setBackground(Color.BLACK);
         textArea.setForeground(Color.GREEN);
         textArea.setFont(new Font("Lucida Console", Font.PLAIN, 13));
         textArea.setLineWrap(true);
         textArea.setEditable(false);
-        sl_contentPane.putConstraint(SpringLayout.NORTH, textArea, 9, SpringLayout.SOUTH, progressBar);
-        sl_contentPane.putConstraint(SpringLayout.WEST, textArea, 2, SpringLayout.WEST, progressBar);
-        sl_contentPane.putConstraint(SpringLayout.EAST, textArea, 312, SpringLayout.EAST, lblProgress);
         contentPane.add(textArea);
 
         JButton btnCancel = new JButton("Cancel");
+        sl_contentPane.putConstraint(SpringLayout.NORTH, btnCancel, 6, SpringLayout.SOUTH, textArea);
+        sl_contentPane.putConstraint(SpringLayout.EAST, btnCancel, -10, SpringLayout.EAST, contentPane);
         btnCancel.addActionListener(new ActionListener()
         {
             public void actionPerformed(ActionEvent arg0)
@@ -107,8 +99,6 @@ public class JamCraftDownload extends JFrame
                 dispose();
             }
         });
-        sl_contentPane.putConstraint(SpringLayout.NORTH, btnCancel, 6, SpringLayout.SOUTH, textArea);
-        sl_contentPane.putConstraint(SpringLayout.EAST, btnCancel, -10, SpringLayout.EAST, contentPane);
         contentPane.add(btnCancel);
     }
 
@@ -119,33 +109,15 @@ public class JamCraftDownload extends JFrame
             @Override
             public Void doInBackground()
             {
-                if (!isCancelled())
-                {
-                    textArea.append("Cleaning config folder...\n");
-                    cleanConfigFolder();
-                }
-                if (!isCancelled())
-                {
-                    textArea.append("Cleaning mods folder...\n");
-                    removeModsFolder();
-                }
-                if (!isCancelled())
-                {
-                    textArea.append("Removing previously downloaded packs...\n");
-                    removePreviousArchives();
-                }
+                cleanConfigFolder();
+                removeModsFolder();
+                removePreviousArchives();
                 try
                 {
-                    if (!isCancelled())
-                    {
-                        textArea.append("Downloading newest pack...\n");
-                        downloadFile(new URL(Settings.jenkinsURL + "JamCraft-" + currVer + ".7z"), new File("./JamCraft-" + currVer + ".7z").getCanonicalFile());
-                    }
-                    if (!isCancelled())
-                    {
-                        textArea.append("Extracting and installing latest modpack...\n");
-                        extractArchive(new File("./JamCraft-" + currVer + ".7z").getCanonicalFile());
-                    }
+                    downloadFile(new URL(Settings.jenkinsURL + "JamCraft-" + currVer + ".7z"), new File("./JamCraft-" + currVer + ".7z").getCanonicalFile());
+                    extractArchive(new File("./JamCraft-" + currVer + ".7z").getCanonicalFile());
+                    setVisible(false);
+                    dispose();
                 }
                 catch (MalformedURLException e)
                 {
@@ -163,36 +135,80 @@ public class JamCraftDownload extends JFrame
 
     public void removeModsFolder()
     {
-        File modsFolder = new File(Settings.mcDir + "mods/");
+        if (mainWorker != null && !mainWorker.isCancelled())
+        {
+            textArea.append("Cleaning mods folder...\n");
+            File modsFolder = new File(Settings.mcDir + "mods/");
+            if (modsFolder.listFiles() != null)
+            {
+                for (File f : modsFolder.listFiles())
+                {
+                    if (f.getName().contains(".jar"))
+                    {
+                        // f.delete();
+                    }
+                }
+            }
+        }
     }
 
     public void cleanConfigFolder()
     {
-
+        if (mainWorker != null && !mainWorker.isCancelled())
+        {
+            textArea.append("Cleaning config folder...\n");
+            try
+            {
+                File configFolder = new File(Settings.mcDir + "/config/").getCanonicalFile();
+                if (configFolder.listFiles() != null)
+                {
+                    for (File f : configFolder.listFiles())
+                    {
+                        if (!Settings.doNotRemoveConfigs.contains(f.getName()))
+                        {
+                            // f.delete();
+                            System.out.println(f.getName());
+                        }
+                    }
+                }
+            }
+            catch (IOException e)
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 
     public void removePreviousArchives()
     {
-
+        if (mainWorker != null && !mainWorker.isCancelled())
+        {
+            textArea.append("Removing previously downloaded packs...\n");
+        }
     }
 
     public void extractArchive(File file) throws IOException
     {
-        List<String> args = new ArrayList<String>();
-        args.add(new File("./executables/7za.exe").getCanonicalFile().getAbsolutePath());
-        args.add("x");
-        args.add("-aoa");
-        args.add(file.getAbsolutePath());
-        ProcessBuilder proc = new ProcessBuilder(args);
-        File dir=new File(Settings.mcDir).getCanonicalFile();
-        if(!dir.exists())
-        {
-            dir.mkdir();
-        }
-        proc.directory(dir);
         if (mainWorker != null && !mainWorker.isCancelled())
         {
-            Process p = proc.start();
+            textArea.append("Extracting and installing latest modpack...\n");
+            List<String> args = new ArrayList<String>();
+            args.add(new File("./executables/7za.exe").getCanonicalFile().getAbsolutePath());
+            args.add("x");
+            args.add("-aoa");
+            args.add(file.getAbsolutePath());
+            ProcessBuilder proc = new ProcessBuilder(args);
+            File dir = new File(Settings.mcDir).getCanonicalFile();
+            if (!dir.exists())
+            {
+                dir.mkdir();
+            }
+            proc.directory(dir);
+            if (mainWorker != null && !mainWorker.isCancelled())
+            {
+                Process p = proc.start();
+            }
         }
     }
 
@@ -226,32 +242,71 @@ public class JamCraftDownload extends JFrame
 
     public void downloadFile(final URL downloadURL, final File pathToDownload) throws IOException
     {
-        final int blk_size = 8192;
+        if (mainWorker != null && !mainWorker.isCancelled())
+        {
+            textArea.append("Downloading newest pack...\n");
+            if (currVer == 0)
+            {
+                getLatestVersionFromURL(new URL(Settings.jenkinsURL));
+            }
+            final int blk_size = 8192;
+            try
+            {
+                URLConnection con = downloadURL.openConnection();
+                InputStream reader = downloadURL.openStream();
+                FileOutputStream writer = new FileOutputStream(pathToDownload);
+                int total = con.getContentLength();
+                int size_dl = 0;
+                byte[] buffer = new byte[blk_size];
+                int bytesRead = 0;
+                while ((bytesRead = reader.read(buffer)) > 0 && !mainWorker.isCancelled())
+                {
+                    size_dl += bytesRead;
+                    // System.out.println((size_dl / total * 100) + "%");
+                    progressBar.setString((size_dl / total * 100) + "%");
+                    progressBar.setValue(size_dl / total * 100);
+                    lblProgressPercent.setText(size_dl + "B out of " + total + "B");
+                    writer.write(buffer, 0, bytesRead);
+                    buffer = new byte[blk_size];
+                }
+                writer.close();
+                reader.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public int getCurrentVersion()
+    {
+        int highestVer = 0;
         try
         {
-            URLConnection con = downloadURL.openConnection();
-            InputStream reader = downloadURL.openStream();
-            FileOutputStream writer = new FileOutputStream(pathToDownload);
-            int total = con.getContentLength();
-            int size_dl = 0;
-            byte[] buffer = new byte[blk_size];
-            int bytesRead = 0;
-            while ((bytesRead = reader.read(buffer)) > 0 && !mainWorker.isCancelled())
+
+            File currDir = new File(".").getCanonicalFile();
+            for (File f : currDir.listFiles())
             {
-                size_dl += bytesRead;
-                // System.out.println((size_dl / total * 100) + "%");
-                progressBar.setString((size_dl / total * 100) + "%");
-                progressBar.setValue(size_dl / total * 100);
-                lblProgressPercent.setText(size_dl + "B out of " + total + "B");
-                writer.write(buffer, 0, bytesRead);
-                buffer = new byte[blk_size];
+                if (f.getName().contains(".7z"))
+                {
+                    int start = f.getName().indexOf("JamCraft-") + 9;
+                    int end = f.getName().indexOf(".7z");
+                    if (f.getName().substring(start, end).matches("[0-9]+"))
+                    {
+                        int ver = Integer.parseInt(f.getName().substring(start, end));
+                        if (highestVer < ver)
+                        {
+                            highestVer = ver;
+                        }
+                    }
+                }
             }
-            writer.close();
-            reader.close();
         }
         catch (IOException e)
         {
             e.printStackTrace();
         }
+        return highestVer;
     }
 }
